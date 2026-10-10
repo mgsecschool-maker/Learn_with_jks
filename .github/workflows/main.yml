@@ -6,12 +6,15 @@ on:
     branches:
       - main
 
+permissions:
+  contents: read
+
 jobs:
   build:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Java
@@ -20,22 +23,104 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Extract App Project
+      - name: Find Android Project ZIP
+        shell: bash
         run: |
-          unzip -o LearnWithJKS_NoOTP_Starter_Project.zip -d starter
+          echo "Searching for Android project ZIP..."
+
+          ZIP_FILE=$(find . -maxdepth 2 -type f \
+            -iname "*.zip" \
+            ! -path "./.git/*" \
+            | head -n 1)
+
+          if [ -z "$ZIP_FILE" ]; then
+            echo "ERROR: No ZIP file found in repository."
+            echo "Upload the complete Android project ZIP first."
+            exit 1
+          fi
+
+          echo "Using ZIP: $ZIP_FILE"
+          echo "ZIP_FILE=$ZIP_FILE" >> "$GITHUB_ENV"
+
+      - name: Extract Android Project
+        shell: bash
+        run: |
+          mkdir -p extracted
+          unzip -oq "$ZIP_FILE" -d extracted
+
+          echo "Extracted files:"
+          find extracted -maxdepth 4 -type f \
+            \( -name "settings.gradle" \
+            -o -name "settings.gradle.kts" \
+            -o -name "gradlew" \
+            -o -name "build.gradle" \
+            -o -name "build.gradle.kts" \)
+
+      - name: Locate Android Gradle Project
+        shell: bash
+        run: |
+          PROJECT_DIR=""
+
+          while IFS= read -r FILE; do
+            DIR=$(dirname "$FILE")
+
+            if [ -f "$DIR/settings.gradle" ] || \
+               [ -f "$DIR/settings.gradle.kts" ]; then
+              PROJECT_DIR="$DIR"
+              break
+            fi
+          done < <(
+            find extracted -type f \
+              \( -name "settings.gradle" \
+              -o -name "settings.gradle.kts" \)
+          )
+
+          if [ -z "$PROJECT_DIR" ]; then
+            echo "ERROR: Android Gradle project not found."
+            exit 1
+          fi
+
+          echo "Android project: $PROJECT_DIR"
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
         with:
           gradle-version: "8.9"
 
-      - name: Build APK
+      - name: Build Debug APK
+        shell: bash
         run: |
-          cd starter
-          gradle assembleDebug
+          cd "$PROJECT_DIR"
+
+          if [ -f "./gradlew" ]; then
+            chmod +x gradlew
+            ./gradlew assembleDebug --no-daemon
+          else
+            gradle assembleDebug --no-daemon
+          fi
+
+      - name: Verify APK
+        shell: bash
+        run: |
+          APK=$(find "$PROJECT_DIR" -type f \
+            -path "*/build/outputs/apk/debug/*.apk" \
+            | head -n 1)
+
+          if [ -z "$APK" ]; then
+            echo "ERROR: APK was not generated."
+            exit 1
+          fi
+
+          echo "APK created successfully:"
+          ls -lh "$APK"
+
+          mkdir -p "$GITHUB_WORKSPACE/final-apk"
+          cp "$APK" "$GITHUB_WORKSPACE/final-apk/LearnWithJKS.apk"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Learn-With-JKS-APK
-          path: starter/app/build/outputs/apk/debug/app-debug.apk
+          path: final-apk/LearnWithJKS.apk
+          if-no-files-found: error
