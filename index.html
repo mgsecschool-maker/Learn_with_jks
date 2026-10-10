@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Learn With JKS</title>
+<style>
+body {
+  font-family: Arial, sans-serif;
+  background: #f1f5f9;
+  margin: 0;
+  padding: 20px;
+}
+.card {
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 24px;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 15px #ddd;
+}
+h1 { color: #087f5b; text-align: center; }
+input, button {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 13px;
+  margin: 10px 0;
+  border-radius: 8px;
+  font-size: 16px;
+}
+input { border: 1px solid #ccc; }
+button {
+  background: #087f5b;
+  color: white;
+  border: 0;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>Learn With JKS</h1>
+  <h3>विद्यार्थी Registration</h3>
+  <form id="registerForm">
+    <input id="studentName" placeholder="अपना नाम लिखें" required>
+    <input id="mobile" type="tel" inputmode="numeric"
+      placeholder="मोबाइल नंबर लिखें"
+      pattern="[0-9]{10}" maxlength="10" required>
+    <button type="submit">Register करें</button>
+  </form>
+  <div id="home" hidden>
+    <h3>आपका स्वागत है!</h3>
+    <p>अब आप Learn With JKS इस्तेमाल कर सकते हैं।</p>
+    <button onclick="alert('Study Material जल्द उपलब्ध होगा।')">
+      Study Material
+    </button>
+    <button onclick="alert('Quiz जल्द उपलब्ध होगी।')">
+      Online Quiz
+    </button>
+  </div>
+</div>
+<script>
+const form = document.getElementById('registerForm');
+const home = document.getElementById('home');
+
+function showHome() {
+  const student = localStorage.getItem('jks_student');
+  if (!student) return;
+  const data = JSON.parse(student);
+  form.hidden = true;
+  home.hidden = false;
+  home.querySelector('h3').textContent =
+    'स्वागत है, ' + data.name + '!';
+}
+
+form.addEventListener('submit', function(e) {
+  e.preventDefault();
+  const name = document.getElementById('studentName').value.trim();
+  const mobile = document.getElementById('mobile').value.trim();
+  if (!name || !/^[0-9]{10}$/.test(mobile)) {
+    alert('सही नाम और 10 अंकों का मोबाइल नंबर भरें।');
+    return;
+  }
+  localStorage.setItem('jks_student',
+    JSON.stringify({name: name, mobile: mobile}));
+  showHome();
+});
+
+showHome();
+</script>
+</body>
+</html>
