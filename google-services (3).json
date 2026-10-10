@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "936141889329",
+    "project_id": "learn-with-jks",
+    "storage_bucket": "learn-with-jks.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:936141889329:android:26784e3d71e1eb6a061a10",
+        "android_client_info": {
+          "package_name": "com.learnwithjks.app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDwrHvtyXObW8OzvAuIJxpiAmXA60DSCPI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
