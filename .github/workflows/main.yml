@@ -1,104 +1,35 @@
-<!DOCTYPE html>
-<html lang="hi">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Learn With JKS</title>
-<style>
-*{box-sizing:border-box}
-body{margin:0;font-family:Arial,sans-serif;background:#f0f4f8;color:#222}
-header{background:#075e54;color:white;padding:24px 12px;text-align:center}
-header h1{margin:0;font-size:27px}
-header p{margin:8px 0 0}
-.card{background:white;margin:16px;padding:20px;border-radius:14px;box-shadow:0 2px 8px #ddd}
-input,button{width:100%;padding:13px;margin:8px 0;border-radius:8px;font-size:16px}
-input{border:1px solid #bbb}
-button{border:0;background:#087f5b;color:white;font-weight:bold}
-h2{color:#075e54}
-.menu button{background:#075e54}
-.small{font-size:13px;color:#666}
-</style>
-</head>
-<body>
-<header>
-<h1>📚 Learn With JKS</h1>
-<p>आपकी पढ़ाई, आपकी सफलता 🎯</p>
-</header>
+name: Build Learn With JKS APK
 
-<div class="card" id="registration">
-<h2>रजिस्ट्रेशन करें</h2>
-<p>अपना नाम और मोबाइल नंबर भरें।</p>
-<input id="name" type="text" placeholder="अपना पूरा नाम लिखें">
-<input id="mobile" type="tel" inputmode="numeric" maxlength="10" placeholder="10 अंकों का मोबाइल नंबर">
-<button onclick="register()">रजिस्ट्रेशन करें</button>
-<p class="small">इस शुरुआती संस्करण में OTP नहीं है।</p>
-</div>
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
 
-<div class="card" id="welcome" style="display:none">
-<h2 id="welcomeText"></h2>
-<p>Learn With JKS में आपका स्वागत है।</p>
-<div class="menu">
-<button onclick="showSection('study')">📚 स्टडी मटेरियल</button>
-<button onclick="showSection('quiz')">📝 क्विज</button>
-<button onclick="showSection('about')">ℹ️ हमारे बारे में</button>
-<button onclick="logout()">लॉगआउट</button>
-</div>
-</div>
+jobs:
+  build:
+    runs-on: ubuntu-22.04
 
-<div class="card" id="study" style="display:none">
-<h2>📚 स्टडी मटेरियल</h2>
-<p>जल्द ही यहाँ अध्ययन सामग्री उपलब्ध होगी।</p>
-<button onclick="home()">वापस जाएँ</button>
-</div>
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
 
-<div class="card" id="quiz" style="display:none">
-<h2>📝 क्विज</h2>
-<p>जल्द ही यहाँ ऑनलाइन टेस्ट उपलब्ध होगा।</p>
-<button onclick="home()">वापस जाएँ</button>
-</div>
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
 
-<div class="card" id="about" style="display:none">
-<h2>Learn With JKS</h2>
-<p>प्रतियोगी परीक्षाओं की तैयारी के लिए आपका शैक्षणिक मंच।</p>
-<button onclick="home()">वापस जाएँ</button>
-</div>
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
 
-<script>
-function register(){
- const n=document.getElementById('name').value.trim();
- const m=document.getElementById('mobile').value.trim();
- if(n.length<2){alert('कृपया अपना नाम लिखें।');return}
- if(!/^[0-9]{10}$/.test(m)){alert('कृपया सही 10 अंकों का मोबाइल नंबर लिखें।');return}
- localStorage.setItem('jks_user',JSON.stringify({name:n,mobile:m}));
- openApp(n);
-}
-function openApp(n){
- document.getElementById('registration').style.display='none';
- document.getElementById('welcome').style.display='block';
- document.getElementById('welcomeText').textContent='नमस्ते, '+n+' जी!';
-}
-function hideSections(){
- ['registration','welcome','study','quiz','about'].forEach(id=>{
- document.getElementById(id).style.display='none';
- });
-}
-function showSection(id){
- hideSections();
- document.getElementById(id).style.display='block';
-}
-function home(){
- ['study','quiz','about'].forEach(id=>document.getElementById(id).style.display='none');
- document.getElementById('welcome').style.display='block';
-}
-function logout(){
- localStorage.removeItem('jks_user');
- hideSections();
- document.getElementById('registration').style.display='block';
-}
-const saved=localStorage.getItem('jks_user');
-if(saved){
- try{openApp(JSON.parse(saved).name)}catch(e){}
-}
-</script>
-</body>
-</html>
+      - name: Check project files
+        run: |
+          echo "Repository files:"
+          ls -la
+          echo "Checking for Android project..."
+          if [ ! -f settings.gradle ] && [ ! -f settings.gradle.kts ]; then
+            echo "Android Gradle project not found."
+            exit 1
+          fi
+          echo "Android Gradle project found."
