@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-22.04
 
     steps:
-      - name: Checkout
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Setup Java
@@ -20,16 +20,32 @@ jobs:
           distribution: temurin
           java-version: "17"
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
-
-      - name: Check project files
+      - name: Check ZIP file
         run: |
-          echo "Repository files:"
-          ls -la
-          echo "Checking for Android project..."
-          if [ ! -f settings.gradle ] && [ ! -f settings.gradle.kts ]; then
-            echo "Android Gradle project not found."
-            exit 1
-          fi
-          echo "Android Gradle project found."
+          test -f LearnWithJKS_Android_Project.zip
+          echo "ZIP file found"
+
+      - name: Extract Android project
+        run: |
+          mkdir -p project
+          unzip -o LearnWithJKS_Android_Project.zip -d project
+          test -f project/settings.gradle
+          test -f project/app/build.gradle
+          echo "Android project extracted successfully"
+
+      - name: Setup Gradle
+        run: |
+          wget -q https://services.gradle.org/distributions/gradle-8.9-bin.zip
+          unzip -q gradle-8.9-bin.zip -d "$HOME"
+          echo "$HOME/gradle-8.9/bin" >> "$GITHUB_PATH"
+
+      - name: Build APK
+        working-directory: project
+        run: gradle --no-daemon assembleDebug
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Learn-With-JKS-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
